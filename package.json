@@ -1,8 +1,8 @@
 {
-  "name": "exploratorium-sf-beacon-bay",
-  "nomadName": "exploratorium-sf-beacon-bay",
+  "name": "exploratorium-composite",
+  "nomadName": "exploratorium-composite",
   "version": "1.0.0",
-  "description": "San Francisco Bay BEACON sensor (Bay Side)  at the Exploratorium. Sourced from http://erddap.exploratorium.edu:8080/erddap",
+  "description": "San Francisco Composite at the Exploratorium. Sourced from http://erddap.exploratorium.edu:8080/erddap",
   "main": "sensor.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,7 +19,6 @@
   "homepage": "https://github.com/IDEO-coLAB/nomad-sensor-hello#readme",
   "dependencies": {
     "moment": "^2.16.0",
-    "node-fetch": "^1.6.3",
     "nomad-stream": "0.0.6"
   }
 }
