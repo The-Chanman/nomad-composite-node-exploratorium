@@ -4,24 +4,25 @@ const moment = require('moment')
 const nomad = new Nomad()
 
 let instance = null
-const timeThreshold = 3 * 60 * 60 * 1000 // 3 hours
-const frequency = 60 * 60 * 1000 // 1 hour
+const timeThreshold = 1 * 60 * 60 * 1000 // 1 hour
+const frequency =  10 * 60 * 1000 // 10 minutes
 let lastPub = null
+const subscriptions = ['QmW7MrsugXX5nrBtJpGadrZRtT7xTMxuZH9F1A8UEi3kMa', 'QmXeYj4i32SAynbS43jWuJSinVRveZQ7YoMWL9RsfkDE6h']
+
 
 const defaultPublishData = {
-  bayWaterSensor: {
-    salinity: {
-      data: "",
-      units: "",
-      time: "",
-    }
+
+  dissolved_o2: {
+    data: "",
+    units: "",
+    time: "",
+    nodeID: "",
   },
-  baySideBeaconSensor: {
-    Dew_Point: {
-      data: "",
-      units: "",
-      time: "",
-    }
+  dew_point: {
+    data: "",
+    units: "",
+    time: "",
+    nodeID: "",
   }
 }
 
@@ -29,14 +30,16 @@ class DataMaintainer {
   constructor(){
     this.data = defaultPublishData
   }
-  setValue(key, value){
+  setValue(key, id, value){
     let cleanedKey = this.cleanKey(key)
     if(cleanedKey in this.data){
       this.data[cleanedKey].data = value.data
       this.data[cleanedKey].time = value.time
       this.data[cleanedKey].units = value.units
+      this.data[cleanedKey].nodeID = id
     } else {
       this.data[cleanedKey] = value
+      this.data[cleanedKey].nodeID = id
     }
   }
   cleanKey(key){
@@ -48,7 +51,7 @@ class DataMaintainer {
     return this.data
   }
   isAllFilled(){
-    return this.data["bayWaterSensor"]["salinity"]["data"] && this.data["bayWaterSensor"]["salinity"]["time"] && this.data["baySideBeaconSensor"]["Dew_Point"]["data"] && this.data["baySideBeaconSensor"]["Dew_Point"]["time"]
+    return this.data["dissolved_o2"]["data"] && this.data["dissolved_o2"]["time"] && this.data["dew_point"]["data"] && this.data["dew_point"]["time"]
   }
   clear(){
     this.data = defaultPublishData
@@ -71,11 +74,11 @@ nomad.prepareToPublish()
   })
   .then(() =>{
     lastPub = getTime()
-    nomad.subscribe(['QmdmSfLYyyKRdadFPbYv8o89ibU4tpcdFve6dqQwbQ9QhU', 'Qmcd8r4J81uxcLSsrUGMh9D4Rh47UYmPNDCEpuifxuNyNy'], function(message) {
+    nomad.subscribe(subscriptions, function(message) {
       console.log(message.message)
       messageData = JSON.parse(message.message)
       try{
-        dataManager.setValue(messageData.columnNames[5], {data: messageData.data[5], time: messageData.data[0]})
+        dataManager.setValue(messageData.columnNames[5], message.id, {data: messageData.data[5], time: messageData.data[0], units: messageData.columnUnits[5]})
       }
       catch(err){
         console.log("DataMaintainer failed with error of " + err)
@@ -84,8 +87,9 @@ nomad.prepareToPublish()
       let currentTime = getTime()
       let timeSince = currentTime - lastPub
       if (timeSince >= frequency){
-        console.log("timeSince >= timeBetween")
-        if (dataManager.isAllFilled){
+        console.log("==========>timeSince >= timeBetween")
+        console.log('dataManager.isAllFilled?:', dataManager.isAllFilled())
+        if (dataManager.isAllFilled()){
           // publish if everything is full
           console.log("***************************************************************************************")
           console.log(dataManager.getAll())
